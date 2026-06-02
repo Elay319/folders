@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My File Explorer</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #00ff99;
+    }
+
+    .file, .folder, .back {
+      padding: 12px;
+      margin: 6px 0;
+      background: #222;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .file:hover, .folder:hover, .back:hover {
+      background: #333;
+    }
+
+    a {
+      color: white;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📁 My File Explorer</h1>
+<div id="path"></div>
+<div id="files">Loading...</div>
+
+<script>
+  const USERNAME = "Elay319";       // change if needed
+  const REPO = "folders";        // change to your repo name
+  const BRANCH = "main";            // use "master" if your repo uses master
+
+  let currentPath = "";
+
+  async function loadFiles(path = "") {
+    currentPath = path;
+
+    document.getElementById("path").innerHTML =
+      "Path: /" + currentPath;
+
+    const url =
+      `https://api.github.com/repos/${USERNAME}/${REPO}/contents/${path}?ref=${BRANCH}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const filesDiv = document.getElementById("files");
+    filesDiv.innerHTML = "";
+
+    if (currentPath !== "") {
+      const back = document.createElement("div");
+      back.className = "back";
+      back.textContent = "⬅ Back";
+      back.onclick = () => {
+        const parts = currentPath.split("/");
+        parts.pop();
+        loadFiles(parts.join("/"));
+      };
+      filesDiv.appendChild(back);
+    }
+
+    if (!Array.isArray(data)) {
+      filesDiv.innerHTML = "Could not load files.";
+      return;
+    }
+
+    data.forEach(item => {
+      if (item.name === "index.html") return;
+
+      const div = document.createElement("div");
+
+      if (item.type === "dir") {
+        div.className = "folder";
+        div.textContent = "📁 " + item.name;
+        div.onclick = () => loadFiles(item.path);
+      } else {
+        div.className = "file";
+        div.innerHTML = `📄 <a href="${item.download_url}" target="_blank">${item.name}</a>`;
+      }
+
+      filesDiv.appendChild(div);
+    });
+  }
+
+  loadFiles();
+</script>
+
+</body>
+</html>
